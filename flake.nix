@@ -48,7 +48,7 @@
       lib.runtimePkgs.${system} = runtimePkgs;
 
       packages.${system} = {
-        default = pkgs.lib.makeOverridable mkWrapper wrappers.lib.wrapPackage {
+        default = pkgs.lib.makeOverridable mkWrapper {
           inherit pkgs;
           package = pkgs.hyprland;
           runtimePkgs = runtimePkgs;
