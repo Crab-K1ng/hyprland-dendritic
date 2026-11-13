@@ -21,21 +21,40 @@
 
       runtimePkgs = with pkgs; [
         foot
+        waybar
       ];
+
+      mkWrapper =
+        {
+          pkgs,
+          package,
+          runtimePkgs,
+          env,
+          flags,
+        }:
+        (wrappers.lib.wrapPackage (
+          { ... }: {
+            inherit
+              pkgs
+              package
+              runtimePkgs
+              env
+              flags
+              ;
+          }
+        ));
     in
     {
       lib.runtimePkgs.${system} = runtimePkgs;
 
       packages.${system} = {
-        default = wrappers.lib.wrapPackage (
-          { ... }: {
-            inherit pkgs;
-            package = pkgs.hyprland;
-            runtimePkgs = runtimePkgs;
-            env."HYPRLAND_ROOT" = ./.;
-            flags."--config" = ./hyprland.lua;
-          }
-        );
+        default = pkgs.lib.makeOverridable mkWrapper wrappers.lib.wrapPackage {
+          inherit pkgs;
+          package = pkgs.hyprland;
+          runtimePkgs = runtimePkgs;
+          env."HYPRLAND_ROOT" = ./.;
+          flags."--config" = ./hyprland.lua;
+        };
       };
     };
 
