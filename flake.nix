@@ -3,9 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-26.05";
-
     wrappers.url = "github:nix-community/nix-wrapper-modules";
-
   };
 
   outputs =
@@ -13,22 +11,25 @@
       self,
       nixpkgs,
       wrappers,
-    }@inputs:
+    }:
     let
       # Hard code system for ease of use, hyprland only supports x86_64-linux anyway iirc
       system = "x86_64-linux";
       pkgs = import nixpkgs { inherit system; };
 
-      runtimePkgs = with pkgs; [
-        foot
-        waybar
-      ];
+      runtimePkgsDefault = {
+        inherit (pkgs)
+          foot
+          waybar
+          nemo
+          ;
+      };
 
       mkWrapper =
         {
           pkgs,
           package,
-          runtimePkgs,
+          runtimePkgs ? { },
           env,
           flags,
         }:
@@ -37,21 +38,19 @@
             inherit
               pkgs
               package
-              runtimePkgs
               env
               flags
               ;
+
+            runtimePkgs = builtins.attrValues (runtimePkgsDefault // runtimePkgs);
           }
         ));
     in
     {
-      lib.runtimePkgs.${system} = runtimePkgs;
-
       packages.${system} = {
         default = pkgs.lib.makeOverridable mkWrapper {
           inherit pkgs;
           package = pkgs.hyprland;
-          runtimePkgs = runtimePkgs;
           env."HYPRLAND_ROOT" = ./.;
           flags."--config" = ./hyprland.lua;
         };
